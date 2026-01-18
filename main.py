@@ -1,15 +1,28 @@
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-from dataclasses import dataclass
+from Crypto.Random import get_random_bytes
 
-key = b'thisisasecretpas' # 16 byte pass
+CONST_IMAGE_NAME = 'cp-logo.bmp' #not actually const, be careful!
 
-cipher = AES.new(key, AES.MODE_ECB)
+key = get_random_bytes(16) # 16 byte randomly generated pass
 
+cipherECB = AES.new(key, AES.MODE_ECB)
+cipherCBC = AES.new(key, AES.MODE_ECB)
 bitmap_header = bytes(54)
 
-file = open("cp-logo.bmp", "rb")
+file = open(CONST_IMAGE_NAME, "rb")
 bitmap_header = file.read(54)
+#file.seek(54, 0) not sure if this is necessary but included it incase we come back and it is later
 
+imagedata = file.read()
+imagedataCopy = imagedata
+encryptedECB = cipherECB.encrypt(pad(imagedata, AES.block_size))
+encryptedCBC = cipherCBC.encrypt(pad(imagedataCopy, AES.block_size))
 
+otpECB = open("encryptedECB.bmp", "wb")
+otpECB.write(bitmap_header)
+otpECB.write(encryptedECB)
 
+otpCBC = open("encryptedCBC.bmp", "wb")
+otpCBC.write(bitmap_header)
+otpCBC.write(encryptedCBC)
