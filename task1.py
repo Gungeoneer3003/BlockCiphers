@@ -10,7 +10,7 @@ CONST_IMAGE_NAME = sys.argv[1]
 CONST_IMAGE_NAME = 'cp-logo.bmp' #not actually const, be careful!
 
 key = get_random_bytes(16) # 16 byte randomly generated pass
-with open('keyFile.txt', 'wb') as keyFile:
+with open('keyFile1.txt', 'wb') as keyFile:
     keyFile.write(key)
 
 cipherECB = AES.new(key, AES.MODE_ECB)
@@ -32,4 +32,6 @@ otpECB.write(encryptedECB)
 
 otpCBC = open("encryptedCBC.bmp", "wb")
 otpCBC.write(bitmap_header)
+#Referenced video recommends against including iv with ciphertext in production
+otpCBC.write(cipherCBC.iv) #Necessary for CBC decryption
 otpCBC.write(encryptedCBC)
