@@ -1,10 +1,17 @@
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
+import sys
 
+#Commandline arguments (should check error-handling?)
+'''
+CONST_IMAGE_NAME = sys.argv[1]
+'''
 CONST_IMAGE_NAME = 'cp-logo.bmp' #not actually const, be careful!
 
 key = get_random_bytes(16) # 16 byte randomly generated pass
+with open('keyFile.txt', 'wb') as keyFile:
+    keyFile.write(key)
 
 cipherECB = AES.new(key, AES.MODE_ECB)
 cipherCBC = AES.new(key, AES.MODE_ECB)
