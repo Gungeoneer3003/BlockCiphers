@@ -10,10 +10,14 @@ IV = get_random_bytes(16) #Key is 16 bytes, so this should be 16 bytes
 
 #Hard coded user data to allow easier manipulation, capitalized for 'sudo-const' consistency
 USERDATA = "You're the man now, dog"
+INPUTFLAG = False
 
 def submit():
-    #plaintext = input("Enter a line: ")
-    plaintext = USERDATA
+    if(INPUTFLAG):
+        plaintext = input("Enter a line: ")
+    else:
+        plaintext = USERDATA
+
     cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
     joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"])
 
@@ -24,7 +28,6 @@ def submit():
     #print(joined)
 
     ciphertext = cipher.encrypt(pad(joined.encode(), AES.block_size))
-
     return ciphertext
 
 def verify(line):
@@ -62,8 +65,11 @@ def addAdmin(line):
     padBytes = bytes([padLength] * padLength)
     firstMask = codeInjection + padBytes
 
-    plaintext = USERDATA
-    # plaintext = input("What was the original input: ")
+    if(INPUTFLAG):
+        plaintext = input("What was the original input: ")
+    else:
+        plaintext = USERDATA
+
     cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
     joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"]).encode()
     originalText = pad(joined, AES.block_size)
