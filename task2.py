@@ -7,13 +7,8 @@ key = get_random_bytes(16) # 16 byte randomly generated pass
 with open('keyFile2.txt', 'wb') as keyFile:
     keyFile.write(key)
 
-<<<<<<< HEAD
 #Hard coded user data to allow easier manipulation, capitalized for 'sudo-const' consistency
 USERDATA = "You’re the man now, dog"
-=======
-#Hard coded user data to allow easier manipulation
-userdata = "You're the man now, dog"
->>>>>>> da731ac07e66ebd95e232531422e619064b08c5f
 
 def submit():
     #plaintext = input("Enter a line: ")
@@ -65,14 +60,10 @@ def addAdmin(line):
     padBytes = bytes([padLength] * padLength)
     firstMask = codeInjection + padBytes
 
-<<<<<<< HEAD
-    secondBlock = messageStart[:16] + USERDATA
-=======
     iv = line[:16]
     ciphertext = line[16:-32]
     secondLastChunk = line[-32:-16]
     lastChunk = line[-16:]
->>>>>>> da731ac07e66ebd95e232531422e619064b08c5f
 
     secondMask = bytes(a ^ b for a, b in zip(lastChunk, firstMask))
     newSecondLast = bytes(a ^ b for a, b in zip(secondLastChunk, secondMask))
