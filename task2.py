@@ -3,12 +3,13 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 import sys
 
-key = get_random_bytes(16) # 16 byte randomly generated pass
+KEY = get_random_bytes(16) # 16 byte randomly generated pass
 with open('keyFile2.txt', 'wb') as keyFile:
-    keyFile.write(key)
+    keyFile.write(KEY)
+IV = get_random_bytes(16) #Key is 16 bytes, so this should be 16 bytes
 
 #Hard coded user data to allow easier manipulation, capitalized for 'sudo-const' consistency
-USERDATA = "You’re the man now, dog"
+USERDATA = "You're the man now, dog"
 
 def submit():
     #plaintext = input("Enter a line: ")
@@ -16,26 +17,27 @@ def submit():
     cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
     joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"])
 
-    cipher = AES.new(key, AES.MODE_CBC)
-    iv = cipher.iv #Key is 16 bytes, so this should be 16 bytes
+    global IV
+    cipher = AES.new(KEY, AES.MODE_CBC)
+    IV = cipher.iv
+
+    #print(joined)
 
     ciphertext = cipher.encrypt(pad(joined.encode(), AES.block_size))
-    # Referenced video recommends against including iv with ciphertext in production
-    line = iv + ciphertext
 
-    return line
+    return ciphertext
 
 def verify(line):
     #16 should maybe be a variable name
-    iv = line[:16]
-    ciphertext = line[16:]
-    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = line
+
+    cipher = AES.new(KEY, AES.MODE_CBC, IV)
 
     # Decrypt line
     paddedPlaintext = cipher.decrypt(ciphertext)
-    print(paddedPlaintext)
+    #print(paddedPlaintext)
 
-    plaintext = unpad(paddedPlaintext, AES.block_size).decode()
+    plaintext = unpad(paddedPlaintext, AES.block_size).decode(errors="ignore")
     print(plaintext)
 
     #Redundant split for readability
@@ -60,20 +62,23 @@ def addAdmin(line):
     padBytes = bytes([padLength] * padLength)
     firstMask = codeInjection + padBytes
 
-    plaintext = userdata
+    plaintext = USERDATA
+    # plaintext = input("What was the original input: ")
     cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
     joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"]).encode()
     originalText = pad(joined, AES.block_size)
+
     secondMask = bytes(a ^ b for a, b in zip(originalText[-16:], firstMask))
 
-    iv = line[:16]
-    ciphertext = line[16:-32]
+    ciphertext = line[:-32]
     secondLastChunk = line[-32:-16]
     lastChunk = line[-16:]
 
     newSecondLast = bytes(a ^ b for a, b in zip(secondLastChunk, secondMask))
 
-    return iv + ciphertext + newSecondLast + lastChunk
+    return ciphertext + newSecondLast + lastChunk
+
+
 
 
 def main():
@@ -82,10 +87,9 @@ def main():
     print(verify(line))
 
     print("\nNow testing with code injection")
-    line5 = submit()
-
-    line5 = addAdmin(line5)
-    print(verify(line5))
+    line2 = submit()
+    line2 = addAdmin(line2)
+    print(verify(line2))
 
 main()
 
