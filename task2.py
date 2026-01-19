@@ -60,12 +60,17 @@ def addAdmin(line):
     padBytes = bytes([padLength] * padLength)
     firstMask = codeInjection + padBytes
 
+    plaintext = userdata
+    cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
+    joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"]).encode()
+    originalText = pad(joined, AES.block_size)
+    secondMask = bytes(a ^ b for a, b in zip(originalText[-16:], firstMask))
+
     iv = line[:16]
     ciphertext = line[16:-32]
     secondLastChunk = line[-32:-16]
     lastChunk = line[-16:]
 
-    secondMask = bytes(a ^ b for a, b in zip(lastChunk, firstMask))
     newSecondLast = bytes(a ^ b for a, b in zip(secondLastChunk, secondMask))
 
     return iv + ciphertext + newSecondLast + lastChunk
