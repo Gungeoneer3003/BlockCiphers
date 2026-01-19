@@ -7,12 +7,12 @@ key = get_random_bytes(16) # 16 byte randomly generated pass
 with open('keyFile2.txt', 'wb') as keyFile:
     keyFile.write(key)
 
-#Hard coded user data to allow easier manipulation
-userdata = "You’re the man now, dog"
+#Hard coded user data to allow easier manipulation, capitalized for 'sudo-const' consistency
+USERDATA = "You’re the man now, dog"
 
 def submit():
     #plaintext = input("Enter a line: ")
-    plaintext = userdata
+    plaintext = USERDATA
     cleaned = plaintext.replace(';', '%3B').replace('=', '%3D')
     joined = ''.join(["userid=456; userdata=", cleaned, ";session-id=31337"])
 
@@ -60,7 +60,7 @@ def addAdmin(line):
     codeInjection = ";admin=true;"
     messageStart = "userid=456; userdata="
 
-    secondBlock = messageStart[:16] + userdata
+    secondBlock = messageStart[:16] + USERDATA
 
     mask = xor_two_str(codeInjection, secondBlock).encode()
     injLength = len(codeInjection)
