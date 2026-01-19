@@ -8,7 +8,7 @@ with open('keyFile2.txt', 'wb') as keyFile:
     keyFile.write(key)
 
 #Hard coded user data to allow easier manipulation
-userdata = "You’re the man now, dog"
+userdata = "You're the man now, dog"
 
 def submit():
     #plaintext = input("Enter a line: ")
@@ -32,7 +32,10 @@ def verify(line):
     cipher = AES.new(key, AES.MODE_CBC, iv)
 
     # Decrypt line
-    plaintext = unpad(cipher.decrypt(ciphertext), AES.block_size).decode()
+    paddedPlaintext = cipher.decrypt(ciphertext)
+    print(paddedPlaintext)
+
+    plaintext = unpad(paddedPlaintext, AES.block_size).decode()
     print(plaintext)
 
     #Redundant split for readability
@@ -43,32 +46,29 @@ def verify(line):
 
 '''
 This method will work by messing with the ciphertext to
-1. Mess with the beginning to add ";admin=true;"
-This works because we know the beginning is more than 16 bytes
+1. Add one more block since we can use the last one to write in the new one
+2. Make a mask and add the proper bits for admin
+3. Do the math and add the remaining padding to the mask
+4.  
+(This will mean that the original padding and 2nd to last block will be garbage)
+This will work because every block has to be 16 bytes
 '''
 
-def xor_two_str(a,b):
-    xored = []
-    for i in range(max(len(a), len(b))):
-        xored_value = ord(a[i%len(a)]) ^ ord(b[i%len(b)])
-        xored.append(hex(xored_value)[2:])
-    return ''.join(xored)
-
 def addAdmin(line):
-    iv = line[16:]
-    ciphertext = line[:16]
-    codeInjection = ";admin=true;"
-    messageStart = "userid=456; userdata="
+    codeInjection = ";admin=true;".encode()
+    padLength = 16 - (len(codeInjection) & 15)
+    padBytes = bytes([padLength] * padLength)
+    firstMask = codeInjection + padBytes
 
-    secondBlock = messageStart[:16] + userdata
+    iv = line[:16]
+    ciphertext = line[16:-32]
+    secondLastChunk = line[-32:-16]
+    lastChunk = line[-16:]
 
-    mask = xor_two_str(codeInjection, secondBlock).encode()
-    injLength = len(codeInjection)
-    mask = mask[injLength:]
+    secondMask = bytes(a ^ b for a, b in zip(lastChunk, firstMask))
+    newSecondLast = bytes(a ^ b for a, b in zip(secondLastChunk, secondMask))
 
-    newCiphertext = bytes(a ^ b for a, b in zip(mask, ciphertext))
-
-    return iv + newCiphertext
+    return iv + ciphertext + newSecondLast + lastChunk
 
 
 def main():
@@ -77,8 +77,37 @@ def main():
     print(verify(line))
 
     print("\nNow testing with code injection")
-    line = submit()
-    line = addAdmin(line)
-    print(verify(line))
+    line5 = submit()
+
+    line5 = addAdmin(line5)
+    print(verify(line5))
 
 main()
+
+
+'''
+    newLine = line
+    iv =  newLine[16:]
+    ciphertext =  newLine
+    codeInjection = ";admin=true;".encode()
+
+    newBlocks = bytearray(31)
+    for i in range(len(newBlocks)):
+        newBlocks[i] = 0
+
+    change = 'A'.encode()
+
+    test = ciphertext[-16].to_bytes(1, "big")
+    result = bytes(a ^ b for a, b in zip(change, test))
+    print(hex(test[0]), hex(change[0]), hex(result[0]))
+
+    newCiphertext = ciphertext + result
+    
+    
+    injLength = len(codeInjection)
+    padLength = 16 - (injLength & 15)
+
+    newBlocks[:injLength] = codeInjection.encode()
+    newBlocks[:padLength] = bytes([padLength]) * padLength
+
+'''
