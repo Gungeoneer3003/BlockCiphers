@@ -5,7 +5,7 @@ import sys
 
 #Commandline arguments (should check error-handling?)
 
-CONST_IMAGE_NAME = sys.argv[1]
+image_name = sys.argv[1]
 
 # CONST_IMAGE_NAME = 'cp-logo.bmp' #not actually const, be careful!
 
@@ -18,7 +18,7 @@ cipherCBC = AES.new(key, AES.MODE_ECB)
 bitmap_header = bytes(54)
 
 try:
-    file = open(CONST_IMAGE_NAME, "rb")
+    file = open(image_name, "rb")
 except FileNotFoundError:
     sys.exit("\nFile not opened. Potentially an invalid name?")
     
