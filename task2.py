@@ -3,6 +3,17 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 import sys
 
+def padding(data):
+    l = AES.block_size - (len(data) % AES.block_size)
+    padded_data = bytes([l]) * l
+    return data + padded_data
+
+def unpadding(data):
+    data_size = len(data)
+    padding_count = data[-1]
+    return data[:-padding_count]
+
+
 KEY = get_random_bytes(16) # 16 byte randomly generated pass
 with open('keyFile2.txt', 'wb') as keyFile:
     keyFile.write(KEY)
@@ -27,7 +38,7 @@ def submit():
 
     #print(joined)
 
-    ciphertext = cipher.encrypt(pad(joined.encode(), AES.block_size))
+    ciphertext = cipher.encrypt(padding(joined.encode()))
     return ciphertext
 
 def verify(line):
@@ -40,7 +51,7 @@ def verify(line):
     paddedPlaintext = cipher.decrypt(ciphertext)
     #print(paddedPlaintext)
 
-    plaintext = unpad(paddedPlaintext, AES.block_size).decode(errors="ignore")
+    plaintext = unpadding(paddedPlaintext).decode(errors="ignore")
     print(plaintext)
 
     #Redundant split for readability
